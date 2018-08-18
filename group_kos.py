@@ -10,6 +10,7 @@ Script to group KO identifiers into higher categories in a summary table.
 
 import argparse
 import pandas as pd
+import numpy as np
 import os
 import time
 from collections import defaultdict
@@ -21,7 +22,7 @@ def getArgs():
 	parser = argparse.ArgumentParser(description = "Group KO identifiers into higher categories.")
 	parser.add_argument("-k", "--ko-table", required = True, help = "KEGG Orthology csv generated from the KEGG-to-anvio script.")
 	parser.add_argument("-g", "--gene-calls-dir", required = True, help = "Directory containing gene calls exported from An'vio.")
-	parser.add_argument("-4", "--include-fourth-level", default = False, help = "Specify this flag to output a table with the fourth hierarchical level. " + 
+	parser.add_argument("-4", "--include-fourth-level", action = "store_true", help = "Specify this flag to output a table with the fourth hierarchical level. " + 
 		"The fourth level are annotations at the protein level, and takes a significant amount of time. Default is to skip the fourth level.")
 	parser.add_argument("-o", "--outpath", default = ".", help = "Path to output file.")
 	args = parser.parse_args()
@@ -39,19 +40,17 @@ def deletePaths(s):
 
 def formatKOTable(ko_table):
 	df = pd.read_table(ko_table, sep = ",")
-	df = df.set_index("accession")
-	df["Category3"].apply(lambda x: deletePaths(x))
+	# df = df.set_index("accession")
+	df["Category3"] = df["Category3"].apply(lambda x: deletePaths(x))
 	return df
 
 def getMatches(df, indices, l):
 	dd = {}
 	dd = defaultdict(lambda: 0, dd)
 	# this will take a while...
-	for ko in l:
-		if ko in indices:
-			for row in df.loc[ko].values:
-				for v in row:
-					dd[v] += 1
+	for row in df[df["accession"].isin(l)].values:
+		for v in row[1:]:
+			dd[v] += 1
 	return dd
 
 def getCategories(df):
@@ -71,9 +70,9 @@ def main():
 	gene_calls_files = [f for f in listDirNoHidden(GENE_CALLS_DIR) if os.path.isfile(os.path.join(GENE_CALLS_DIR, f))]
 	df = formatKOTable(KO_TABLE)
 	columns = df.columns.values
-	categories = columns[:len(columns) - 1]
+	categories = columns[1:len(columns) - 1]
 	if INCLUDE_FOURTH_LEVEL:
-		categories.append(columns[-1])
+		categories = np.append(categories, columns[-1])
 	for category in categories:
 		category_time0 = time.time()
 		print "\n"
