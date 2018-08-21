@@ -40,7 +40,6 @@ def deletePaths(s):
 
 def formatKOTable(ko_table):
 	df = pd.read_table(ko_table, sep = ",")
-	# df = df.set_index("accession")
 	df["Category3"] = df["Category3"].apply(lambda x: deletePaths(x))
 	return df
 
@@ -52,13 +51,6 @@ def getMatches(df, indices, l):
 		for v in row[1:]:
 			dd[v] += 1
 	return dd
-
-def getCategories(df):
-	cat1 = df["Category1"].unique()
-	cat2 = df["Category2"].unique()
-	cat3 = df["Category3"].unique()
-	cat4 = df["description"].unique()
-	return cat1, cat2, cat3, cat4
 
 def main():
 	main_t0 = time.time()
